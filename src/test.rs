@@ -807,7 +807,7 @@ fn ps_observes_pid(pid: u32) -> io::Result<bool> {
     }
 }
 
-// We don't spawn reaper threads on Windows, and `ps` doesn't exist on Windows either.
+// We don't track `LEAKED_CHILDREN` on Windows, and `ps` doesn't exist on Windows either.
 #[cfg(not(windows))]
 #[test]
 fn test_zombies_reaped() -> io::Result<()> {
@@ -844,9 +844,9 @@ fn test_zombies_reaped() -> io::Result<()> {
         assert!(ps_observes_pid(pid)?);
     }
 
-    // Drop all the handles. The first 10 children will probably get reaped at this point without
-    // spawning a thread. The last 10 children definitely have not exited, and each of them will
-    // get a waiter thread.
+    // Drop all the handles. The first 10 children will probably get reaped at this point and so
+    // probably won't get added to `LEAKED_CHILDREN`. The last 10 children definitely have not
+    // exited, and each of them will get added to the leaked list.
     drop(child_handles);
 
     // Drop the stdin writer. Now the last 10 children will begin exiting.
